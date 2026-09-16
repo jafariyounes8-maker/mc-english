@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>انگلیسی در دنیای ماینکرفت</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<!-- فونت وزیرمتن: دو منبع، اگر یکی در دسترس نبود دیگری لود می‌شود -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@alwatr/font@0.21.0/vazirmatn.min.css">
+
+<style>
+:root{
+  --dirt-deep:#241B13;
+  --dirt:#3A2C1F;
+  --grass:#7FB53B;
+  --grass-dark:#5C8429;
+  --xp:#F2B233;
+  --ink:#F4EFE6;
+  --ink-mute:#AD9C88;
+  --danger:#E0533D;
+  --slot:#4A3A2A;
+  --font: Vazirmatn, "Vazirmatn VF", Tahoma, -apple-system, "Segoe UI", sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;font-family:var(--font)}
+html,body{height:100%}
+body{
+  background:var(--dirt-deep);color:var(--ink);
+  font-size:16px;line-height:1.8;
+  display:flex;justify-content:center;
+  padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+  overflow-x:hidden;
+}
+#app{width:100%;max-width:440px;min-height:100dvh;display:flex;flex-direction:column;padding:16px 18px 22px}
+svg{shape-rendering:crispEdges}
+
+/* نوار پیشرفت: اسلات‌های هات‌بار */
+.hotbar{display:flex;gap:3px;margin-bottom:22px}
+.hotbar i{flex:1;height:9px;background:var(--slot);box-shadow:inset 2px 2px 0 rgba(0,0,0,.4)}
+.hotbar i.on{background:var(--grass);box-shadow:inset 2px 2px 0 rgba(255,255,255,.25)}
+
+.screen{flex:1;display:flex;flex-direction:column}
+.screen[hidden]{display:none}
+.step-enter{animation:step .16s ease-out}
+@keyframes step{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+h1{font-size:26px;font-weight:800;line-height:1.55;letter-spacing:-.3px}
+h2{font-size:21px;font-weight:700;line-height:1.6;margin-bottom:6px}
+h2.solo{margin-bottom:18px}
+.hint{color:var(--ink-mute);font-size:14px;line-height:1.85;margin-bottom:18px}
+.spacer{flex:1;min-height:16px}
+
+/* آیکون هر اسلاید */
+.icon{width:58px;height:58px;background:var(--dirt);margin-bottom:14px;display:grid;place-items:center;
+  box-shadow:inset 3px 3px 0 rgba(255,255,255,.09), inset -3px -3px 0 rgba(0,0,0,.45);
+  animation:pop .22s cubic-bezier(.2,.9,.3,1.4) both}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+
+/* گزینه‌ها: اسلات موجودی */
+.opts{display:flex;flex-direction:column;gap:9px}
+.opt{width:100%;text-align:right;font-size:15.5px;font-weight:600;line-height:1.7;color:var(--ink);
+  background:var(--dirt);border:0;padding:14px 16px;cursor:pointer;
+  box-shadow:inset 3px 3px 0 rgba(255,255,255,.09), inset -3px -3px 0 rgba(0,0,0,.45);
+  transition:background .1s linear;display:flex;align-items:center;gap:12px}
+.opt:hover{background:#463424}
+.opt:active,.opt.sel{background:var(--grass-dark);box-shadow:inset 3px 3px 0 rgba(255,255,255,.22), inset -3px -3px 0 rgba(0,0,0,.4)}
+.opt b{display:block;width:12px;height:12px;background:var(--slot);box-shadow:inset 2px 2px 0 rgba(0,0,0,.4);flex:none}
+.opt.sel b{background:var(--xp)}
+.opt:focus-visible{outline:3px solid var(--xp);outline-offset:2px}
+
+input{width:100%;font-size:17px;font-weight:600;color:var(--ink);
+  background:#161009;border:0;padding:16px;
+  box-shadow:inset 3px 3px 0 rgba(0,0,0,.55), inset -3px -3px 0 rgba(255,255,255,.07)}
+input::placeholder{color:#6E6153;font-weight:400}
+input:focus{outline:3px solid var(--grass)}
+input[dir=ltr]{text-align:left;letter-spacing:1px}
+.err{color:var(--danger);font-size:14px;font-weight:600;margin-top:10px;min-height:22px}
+
+.cta{width:100%;font-size:17px;font-weight:800;color:#17240B;
+  background:var(--grass);border:0;padding:16px;cursor:pointer;margin-top:14px;
+  box-shadow:inset 4px 4px 0 rgba(255,255,255,.3), inset -4px -4px 0 rgba(0,0,0,.3)}
+.cta:active{box-shadow:inset 4px 4px 0 rgba(0,0,0,.25), inset -4px -4px 0 rgba(255,255,255,.15)}
+.cta:disabled{background:var(--slot);color:#8A7B69;cursor:default;box-shadow:inset 4px 4px 0 rgba(0,0,0,.3)}
+.cta:focus-visible{outline:3px solid var(--xp);outline-offset:2px}
+.ghost{background:none;border:0;color:var(--ink-mute);font-size:14px;font-weight:600;
+  padding:13px;width:100%;cursor:pointer;text-decoration:underline;text-underline-offset:4px}
+
+/* کارت خلاصه در اسلاید پرداخت */
+.card{background:var(--dirt);padding:6px 16px;
+  box-shadow:inset 3px 3px 0 rgba(255,255,255,.09), inset -3px -3px 0 rgba(0,0,0,.45)}
+.card .row{display:flex;justify-content:space-between;align-items:center;gap:14px;
+  font-size:14.5px;padding:10px 0;border-bottom:2px solid rgba(0,0,0,.28)}
+.card .row:last-child{border-bottom:0}
+.card .row span{color:var(--ink-mute);flex:none}
+.card .row b{font-weight:700;text-align:left}
+.card .row.total b{color:var(--xp);font-size:17px;font-weight:800}
+.note{color:var(--ink-mute);font-size:12.5px;line-height:1.8;margin-top:12px}
+
+.done{text-align:center;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1}
+.done .tick{width:64px;height:64px;background:var(--grass);margin-bottom:20px;
+  box-shadow:inset 4px 4px 0 rgba(255,255,255,.3), inset -4px -4px 0 rgba(0,0,0,.3);
+  display:grid;place-items:center;font-size:30px;color:#17240B;animation:pop .35s both}
+.spin{display:inline-block;width:14px;height:14px;background:#17240B;animation:blink .8s steps(2) infinite;vertical-align:-2px}
+@keyframes blink{50%{opacity:.25}}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="hotbar" id="hotbar" hidden></div>
+
+  <section class="screen" id="intro">
+    <div class="hero">
+      <div class="block-wrap">
+        <svg class="block" viewBox="0 0 150 150" aria-hidden="true">
+          <polygon points="75,14 137,49 75,84 13,49" fill="#8CC44A"/>
+          <polygon points="75,14 137,49 75,84" fill="#7FB53B"/>
+          <polygon points="13,49 75,84 75,96 13,61" fill="#5C8429"/>
+          <polygon points="137,49 75,84 75,96 137,61" fill="#4C6E22"/>
+          <polygon points="13,61 75,96 75,136 13,101" fill="#7A5734"/>
+          <polygon points="137,61 75,96 75,136 137,101" fill="#5E4127"/>
+          <rect x="30" y="76" width="9" height="9" fill="#6B4A2C"/>
+          <rect x="52" y="98" width="9" height="9" fill="#8A6440"/>
+          <rect x="96" y="88" width="9" height="9" fill="#4F361F"/>
+        </svg>
+        <div class="bubble">Hello!</div>
+      </div>
+      <h1>توی دنیای ماینکرفت انگلیسی حرف بزن</h1>
+      <p>چند سؤال کوتاه می‌پرسیم تا بفهمیم کدام مسیر مناسب‌تر است. کمتر از یک دقیقه طول می‌کشد و بعد از آن کارشناس ما تماس می‌گیرد و توضیح می‌دهد.</p>
+    </div>
+    <div class="spacer"></div>
+    <button class="cta" id="start">شروع می‌کنم</button>
+  </section>
+
+  <section class="screen" id="q" hidden>
+    <div class="icon" id="q-icon"></div>
+    <h2 id="q-title"></h2>
+    <p class="hint" id="q-hint"></p>
+    <div id="q-body"></div>
+    <p class="err" id="q-err"></p>
+    <div class="spacer"></div>
+    <button class="cta" id="next" hidden>ادامه</button>
+    <button class="ghost" id="tgcontact" hidden>شماره‌ام را از تلگرام بفرست</button>
+  </section>
+
+  <!-- اسلاید پرداخت: دکمه‌اش عمداً به جایی لینک نیست، فقط کلیکش اندازه‌گیری می‌شود -->
+  <section class="screen" id="pay" hidden>
+    <div class="icon" id="pay-icon"></div>
+    <h2 id="pay-title">تکمیل ثبت‌نام و پرداخت</h2>
+    <p class="hint" id="pay-text"></p>
+    <div class="card" id="pay-summary"></div>
+    <p class="note" id="pay-note"></p>
+    <div class="spacer"></div>
+    <button class="cta" id="btn-checkout" data-ev="checkout_click">تکمیل ثبت‌نام و پرداخت</button>
+    <button class="ghost" id="btn-later" data-ev="checkout_skip">فعلاً نه، کارشناس تماس بگیرد</button>
+  </section>
+
+  <section class="screen done" id="done" hidden>
+    <div class="tick">✓</div>
+    <h2 id="done-title">ثبت شد</h2>
+    <p class="hint" id="done-text"></p>
+    <button class="cta" id="close" style="max-width:240px">بستن</button>
+  </section>
+</div>
+
+<script>
+/* ==========================================================================
+   ۱) تنظیمات — فقط این بخش را عوض کن
+   ========================================================================== */
+const CONFIG = {
+  // وب‌هوک ثبت لید. برای «حداقل شماره را داشته باشیم» این فیلد اجباری است.
+  // اگر Google Apps Script است، Content-Type را text/plain گذاشته‌ایم تا preflight نخورد.
+  endpoint: "https://script.google.com/macros/s/AKfycbwSPy6teWmc5MmMm0NORDIOVr6ZY9IbCNev_rUuJAmWC7g7q2VD4PmLevMqvppUKukHUQ/exec",
+
+  clarityId: "",   // Project ID مایکروسافت کلریتی
+  gtmId:     "",   // مثلاً GTM-XXXXXXX
+
+  price:     "",   // اختیاری. مثلاً "۲٬۸۰۰٬۰۰۰ تومان" — خالی بگذاری، ردیف مبلغ نمایش داده نمی‌شود
+  courseName:"دورهٔ انگلیسی در دنیای ماینکرفت",
+
+  afterUrl:  ""    // اختیاری: لینک تلگرامی که بعد از بستن باز شود
+};
+
+/* ==========================================================================
+   ۲) اندازه‌گیری: کلریتی + گوگل تگ منیجر
+   هر رویداد هم به dataLayer می‌رود (برای GTM) هم به clarity (برای فیلتر سشن)
+   ========================================================================== */
+window.dataLayer = window.dataLayer || [];
+
+(function loadGTM(id){
+  if (!id) return;
+  dataLayer.push({ "gtm.start": Date.now(), event: "gtm.js" });
+  const f = document.getElementsByTagName("script")[0], j = document.createElement("script");
+  j.async = true; j.src = "https://www.googletagmanager.com/gtm.js?id=" + id;
+  f.parentNode.insertBefore(j, f);
+})(CONFIG.gtmId);
+
+(function loadClarity(id){
+  if (!id) return;
+  window.clarity = window.clarity || function(){ (window.clarity.q = window.clarity.q || []).push(arguments) };
+  const t = document.createElement("script");
+  t.async = true; t.src = "https://www.clarity.ms/tag/" + id;
+  document.head.appendChild(t);
+})(CONFIG.clarityId);
+
+const LEAD_ID = "ld_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
+
+function track(event, data){
+  const p = Object.assign({ event, lead_id: LEAD_ID, role: (answers && answers.role) || null }, data || {});
+  try { dataLayer.push(p); } catch(e){}
+  try { window.clarity && window.clarity("event", event); } catch(e){}
+}
+function ctag(key, value){
+  if (value == null || value === "") return;
+  try { window.clarity && window.clarity("set", key, String(value)); } catch(e){}
+}
+
+/* ==========================================================================
+   ۳) آیکون‌های پیکسلی — همه ۱۶×۱۶، هم‌خانواده و مرتبط با درس و زبان
+   هر حرف یک رنگ از pal است، نقطه یعنی پیکسل خالی
+   ========================================================================== */
+const ICONS = {
+  head: { // سر بازیکن — «چه کسی فرم را پر می‌کند»
+    pal:{h:"#3B2712",s:"#C08E67",S:"#A87A57",e:"#F5F5F5",p:"#3D5FA8",m:"#7A4A2A",b:"#A87A57"},
+    g:["................",
+       "................",
+       "..hhhhhhhhhhhh..",
+       "..hhhhhhhhhhhh..",
+       "..hhhhhhhhhhhh..",
+       "..hssssssssssh..",
+       "..hseesssseesh..",
+       "..hsepsssspesh..",
+       "..hssssssssssh..",
+       "..hssssSSssssh..",
+       "..hsssmmmmsssh..",
+       "..hssssssssssh..",
+       "..hbbbbbbbbbbh..",
+       "................",
+       "................",
+       "................"]
+  },
+  tag: { // نیم‌تگ (Name Tag) — «اسم و فامیل»
+    pal:{d:"#6B5432",f:"#E8D9B0",o:"#8A6E3E",s:"#DCDCDC"},
+    g:["................",
+       ".............ss.",
+       "............ss..",
+       "...........ss...",
+       "..........ss....",
+       "..ddddddddddd...",
+       "..dfffffffffd...",
+       "..dfooofooofd...",
+       "..dfffffffffd...",
+       "..dfoooofoofd...",
+       "..dfffffffffd...",
+       "..ddddddddddd...",
+       "................",
+       "................",
+       "................",
+       "................"]
+  },
+  cake: { // کیک با شمع — «چند سالته»
+    pal:{f:"#F5B342",c:"#F2F2F2",r:"#D33B3B",w:"#F5F2EA",t:"#D8A55B",T:"#C08F48",d:"#8B5A2B"},
+    g:["................",
+       "................",
+       ".......ff.......",
+       ".......cc.......",
+       "..r..r.cc.r..r..",
+       "..wwwwwwwwwwww..",
+       "..wwwwwwwwwwww..",
+       "..tttttttttttt..",
+       "..tttttttttttt..",
+       "..tTttttttTttt..",
+       "..tttttttttttt..",
+       "..tttttttttttt..",
+       "..dddddddddddd..",
+       "................",
+       "................",
+       "................"]
+  },
+  orb: { // گوی تجربه (XP) — «سطح انگلیسی»
+    pal:{g:"#4E7324",y:"#B7DC52",G:"#8FB63C",w:"#F3FFD0"},
+    g:["................",
+       "................",
+       "......gggg......",
+       "....gyyyyyyg....",
+       "...gywwyyyyyg...",
+       "..gywwyyyyyyyg..",
+       "..gyyyyyyyyyyg..",
+       "..gyyyyyyyyyyg..",
+       "..gyyyyyyyyyyg..",
+       "..gyyyyyyyGyyg..",
+       "..gyyyGyyyyyyg..",
+       "...gyyyGyyyyg...",
+       "....gyyyyyyg....",
+       "......gggg......",
+       "................",
+       "................"]
+  },
+  shelf: { // کتابخانه — «الان کلاس زبان داری؟»
+    pal:{w:"#8A6136",r:"#B5453A",b:"#3D5FA8",g:"#5C8429",y:"#D9A441"},
+    g:["................",
+       "................",
+       "..wwwwwwwwwwww..",
+       "..wrrbbggyyrrw..",
+       "..wrrbbggyyrrw..",
+       "..wrrbbggyyrrw..",
+       "..wwwwwwwwwwww..",
+       "..wbbyyrrggbbw..",
+       "..wbbyyrrggbbw..",
+       "..wbbyyrrggbbw..",
+       "..wwwwwwwwwwww..",
+       "................",
+       "................",
+       "................",
+       "................",
+       "................"]
+  },
+  grass: { // بلوک چمن — «چقدر ماینکرفت بازی می‌کنی»
+    pal:{G:"#8CC44A",g:"#7FB53B",e:"#6BA02F",d:"#8A6244",D:"#6F4C33",k:"#5E4127"},
+    g:["................",
+       "................",
+       "..GGGGGGGGGGGG..",
+       "..GgGGGgGGGgGG..",
+       "..gGGgGGGGgGGG..",
+       "..gegggegggeeg..",
+       "..dgddgdddgddd..",
+       "..dddddddddddd..",
+       "..dDdddddDdddd..",
+       "..ddddDddddddD..",
+       "..dddDdddddDdd..",
+       "..dddddddddddd..",
+       "..kkkkkkkkkkkk..",
+       "................",
+       "................",
+       "................"]
+  },
+  signal: { // نوار اتصال سرور — «بازی آنلاین»
+    pal:{g:"#6FCF4A"},
+    g:["................",
+       "................",
+       "................",
+       ".............gg.",
+       ".............gg.",
+       "..........gg.gg.",
+       "..........gg.gg.",
+       ".......gg.gg.gg.",
+       ".......gg.gg.gg.",
+       "....gg.gg.gg.gg.",
+       "....gg.gg.gg.gg.",
+       ".gg.gg.gg.gg.gg.",
+       ".gg.gg.gg.gg.gg.",
+       "................",
+       "................",
+       "................"]
+  },
+  screen: { // نمایشگر — «با چه دستگاهی بازی می‌کنی»
+    pal:{f:"#8A6136",s:"#2B2016",l:"#9FD75A",m:"#5C8429"},
+    g:["................",
+       "................",
+       "..ffffffffffff..",
+       "..fssssssssssf..",
+       "..fsllllllllsf..",
+       "..fsllllllllsf..",
+       "..fsllmmllllsf..",
+       "..fsllmmllllsf..",
+       "..fsllllllllsf..",
+       "..fssssssssssf..",
+       "..ffffffffffff..",
+       "......ffff......",
+       "....ffffffff....",
+       "................",
+       "................",
+       "................"]
+  },
+  bell: { // زنگوله — «شماره تماس»
+    pal:{b:"#E8C44B",B:"#C49A2E",s:"#8A6136",d:"#6B4A2C"},
+    g:["................",
+       "................",
+       ".......dd.......",
+       "......bbbb......",
+       ".....bbbbbb.....",
+       ".....bbbbbB.....",
+       "....bbbbbbBB....",
+       "....bbbbbbBB....",
+       "...bbbbbbbbBB...",
+       "...bbbbbbbbBB...",
+       "..bbbbbbbbbbBB..",
+       "..ssssssssssss..",
+       ".......ss.......",
+       "................",
+       "................",
+       "................"]
+  },
+  emerald: { // زمرد — واحد معامله در ماینکرفت — «ثبت‌نام و پرداخت»
+    pal:{D:"#1E7A42",E:"#2FBB63",w:"#A8F5C8"},
+    g:["................",
+       "................",
+       ".....DDDDDD.....",
+       "....DEEEEEED....",
+       "...DEwwEEEEED...",
+       "..DEwwEEEEEEED..",
+       "..DEwEEEEEEEED..",
+       "..DEEEEEEEEEED..",
+       "..DEEEEEEEEEED..",
+       "..DEEEEEEEEEED..",
+       "...DEEEEEEEED...",
+       "....DEEEEEED....",
+       ".....DEEEED.....",
+       "......DEED......",
+       "................",
+       "................"]
+  }
+};
+
+function pixelSVG(name, px){
+  const ic = ICONS[name];
+  if (!ic) return "";
+  let rects = "";
+  ic.g.forEach((row, y) => {
+    [...row].forEach((ch, x) => {
+      const c = ic.pal[ch];
+      if (c) rects += `<rect x="${x}" y="${y}" width="1" height="1" fill="${c}"/>`;
+    });
+  });
+  return `<svg viewBox="0 0 16 16" width="${px}" height="${px}" aria-hidden="true">${rects}</svg>`;
+}
+
+/* ==========================================================================
+   ۴) سؤال‌ها
+   هر جا  P(a) ? "..." : "..."  آمده یعنی: اگر والد است این، اگر دانش‌آموز آن.
+   لحن والد: محترمانه و نوشتاری — لحن دانش‌آموز: خودمانی و گفتاری.
+   ========================================================================== */
+const P = a => a.role === "parent";   // والد است؟
+
+const STEPS = [
+  {
+    id:"role", icon:"head", type:"choice",
+    q:"چه کسی دارد این فرم را پر می‌کند؟",
+    hint:"بقیهٔ سؤال‌ها را متناسب با همین جواب می‌پرسیم.",
+    options:[
+      {v:"student", t:"خودم، دانش‌آموزم"},
+      {v:"parent",  t:"پدر یا مادر هستم"}
+    ]
+  },
+  {
+    id:"name", icon:"tag", type:"text",
+    q: a => P(a) ? "اسم و فامیل فرزندتان چیست؟" : "اسم و فامیلت چیه؟",
+    placeholder:"مثلاً سارا محمدی",
+    validate: (v, a) => v.trim().split(/\s+/).filter(Boolean).length >= 2
+      ? ""
+      : (P(a) ? "لطفاً اسم و فامیل را کامل بنویسید." : "اسم و فامیلت رو کامل بنویس.")
+  },
+  {
+    id:"age", icon:"cake", type:"choice",
+    q: a => P(a) ? "فرزندتان چند ساله است؟" : "چند سالته؟",
+    options:[
+      {v:"<10",   t:"زیر ۱۰ سال"},
+      {v:"10-12", t:"۱۰ تا ۱۲ سال"},
+      {v:"13-15", t:"۱۳ تا ۱۵ سال"},
+      {v:"16-18", t:"۱۶ تا ۱۸ سال"},
+      {v:"18+",   t:"بالای ۱۸ سال"}
+    ]
+  },
+  {
+    id:"level", icon:"orb", type:"choice",
+    q: a => P(a) ? "انگلیسی فرزندتان الان در چه حدی است؟" : "انگلیسیت الان در چه حدیه؟",
+    options: a => P(a) ? [
+      {v:"zero",   t:"تقریباً از صفر؛ تازه شروع کرده"},
+      {v:"intro",  t:"می‌تواند خودش را معرفی کند و چند جملهٔ ساده بگوید"},
+      {v:"daily",  t:"مکالمهٔ سادهٔ روزمره را جلو می‌برد"},
+      {v:"fluent", t:"راحت صحبت می‌کند و فقط دنبال تقویت است"}
+    ] : [
+      {v:"zero",   t:"تقریباً از صفر؛ تازه شروع کردم"},
+      {v:"intro",  t:"می‌تونم خودمو معرفی کنم و چند جملهٔ ساده بگم"},
+      {v:"daily",  t:"مکالمهٔ سادهٔ روزمره رو جلو می‌برم"},
+      {v:"fluent", t:"راحت حرف می‌زنم و فقط دنبال تقویتم"}
+    ]
+  },
+  {
+    id:"current", icon:"shelf", type:"choice",
+    q: a => P(a) ? "الان کلاس زبان دارد؟" : "الان کلاس زبان داری؟",
+    options: a => P(a) ? [
+      {v:"institute", t:"بله، آموزشگاه می‌رود"},
+      {v:"tutor",     t:"بله، معلم خصوصی دارد"},
+      {v:"self",      t:"خودش با اپ و ویدیو یاد می‌گیرد"},
+      {v:"none",      t:"نه، فعلاً هیچ کلاسی ندارد"}
+    ] : [
+      {v:"institute", t:"آره، آموزشگاه می‌رم"},
+      {v:"tutor",     t:"آره، معلم خصوصی دارم"},
+      {v:"self",      t:"خودم با اپ و ویدیو یاد می‌گیرم"},
+      {v:"none",      t:"نه، فعلاً هیچ کلاسی ندارم"}
+    ]
+  },
+  {
+    id:"minecraft", icon:"grass", type:"choice",
+    q: a => P(a) ? "فرزندتان چقدر ماینکرفت بازی می‌کند؟" : "چقدر ماینکرفت بازی می‌کنی؟",
+    options: a => P(a) ? [
+      {v:"daily",   t:"تقریباً هر روز"},
+      {v:"some",    t:"گاهی بازی می‌کند"},
+      {v:"heard",   t:"می‌شناسد ولی بازی نمی‌کند"},
+      {v:"unknown", t:"اصلاً با آن آشنا نیست"}
+    ] : [
+      {v:"daily",   t:"تقریباً هر روز"},
+      {v:"some",    t:"گاهی بازی می‌کنم"},
+      {v:"heard",   t:"می‌شناسمش ولی بازی نمی‌کنم"},
+      {v:"unknown", t:"اصلاً باهاش آشنا نیستم"}
+    ]
+  },
+  {
+    id:"online", icon:"signal", type:"choice",
+    q: a => P(a) ? "تا حالا ماینکرفت را آنلاین بازی کرده است؟" : "تا حالا ماینکرفت رو آنلاین بازی کردی؟",
+    hint: a => P(a)
+      ? "منظورمان بازی در سرور یا همراه با بقیه است، نه بازی تک‌نفره."
+      : "منظورم بازی توی سرور یا با دوستاته، نه بازی تک‌نفره.",
+    options: a => P(a) ? [
+      {v:"server",  t:"بله، مرتب در سرور با دوستانش"},
+      {v:"rare",    t:"بله، ولی خیلی کم و هرازگاهی"},
+      {v:"solo",    t:"نه، فقط تک‌نفره بازی می‌کند"},
+      {v:"never",   t:"نه، اصلاً امتحان نکرده"}
+    ] : [
+      {v:"server",  t:"آره، مرتب توی سرور با دوستام"},
+      {v:"rare",    t:"آره، ولی خیلی کم و هرازگاهی"},
+      {v:"solo",    t:"نه، فقط تک‌نفره بازی می‌کنم"},
+      {v:"never",   t:"نه، اصلاً امتحان نکردم"}
+    ]
+  },
+  {
+    id:"device", icon:"screen", type:"choice",
+    q: a => P(a) ? "بیشتر با چه دستگاهی بازی می‌کند؟" : "بیشتر با چی بازی می‌کنی؟",
+    hint: a => P(a)
+      ? "تا بدانیم کلاس باید روی چه دستگاهی اجرا شود."
+      : "تا بدونیم کلاس رو با چی می‌تونی بیای.",
+    options:[
+      {v:"android", t:"موبایل یا تبلت اندروید"},
+      {v:"ios",     t:"آیفون یا آیپد"},
+      {v:"pc",      t:"لپ‌تاپ یا کامپیوتر"},
+      {v:"console", t:"کنسول بازی (پلی‌استیشن یا ایکس‌باکس)"}
+    ]
+  },
+  {
+    id:"phone", icon:"bell", type:"phone",
+    cta:"ثبت اطلاعات",
+    q: a => P(a) ? "با چه شماره‌ای با شما تماس بگیریم؟" : "با چه شماره‌ای باهات تماس بگیریم؟",
+    hint: a => P(a)
+      ? "کارشناس ما فقط یک بار برای مشاوره تماس می‌گیرد و شماره جای دیگری منتشر نمی‌شود."
+      : "کارشناس ما فقط یک بار برای مشاوره زنگ می‌زند و شماره‌ات جای دیگری منتشر نمی‌شود. اگر خودت موبایل نداری، شماره‌ای بنویس که راحت بهت دسترسی داشته باشیم.",
+    placeholder:"09123456789"
+  }
+];
+
+/* برچسب‌های خوانا برای کارت خلاصه */
+const LABELS = {
+  level:{ zero:"مبتدی، از صفر", intro:"مقدماتی", daily:"مکالمهٔ روزمره", fluent:"پیشرفته" },
+  device:{ android:"اندروید", ios:"آیفون یا آیپد", pc:"لپ‌تاپ یا کامپیوتر", console:"کنسول بازی" },
+  age:{ "<10":"زیر ۱۰ سال", "10-12":"۱۰ تا ۱۲ سال", "13-15":"۱۳ تا ۱۵ سال", "16-18":"۱۶ تا ۱۸ سال", "18+":"بالای ۱۸ سال" }
+};
+
+/* ==========================================================================
+   ۵) موتور فرم
+   ========================================================================== */
+const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
+const answers = {};
+let i = 0, pending = null, leadSaved = false, finalStageSent = false;
+
+const $ = id => document.getElementById(id);
+const el = { hotbar:$("hotbar"), intro:$("intro"), q:$("q"), pay:$("pay"), done:$("done"), icon:$("q-icon"),
+  title:$("q-title"), hint:$("q-hint"), body:$("q-body"), err:$("q-err"),
+  next:$("next"), contact:$("tgcontact") };
+
+if (tg){
+  tg.ready(); tg.expand();
+  try { tg.setHeaderColor("#241B13"); tg.setBackgroundColor("#241B13"); } catch(e){}
+  try { tg.disableVerticalSwipes(); } catch(e){}
+  tg.BackButton.onClick(back);
+}
+const haptic = t => { try { tg && tg.HapticFeedback.impactOccurred(t || "light"); } catch(e){} };
+const show = node => [el.intro, el.q, el.pay, el.done].forEach(n => n.hidden = n !== node);
+const val = v => typeof v === "function" ? v(answers) : v;
+
+/* شناسایی سشن در کلریتی */
+(function initTags(){
+  const u = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || {};
+  try { window.clarity && u.id && window.clarity("identify", String(u.id)); } catch(e){}
+  ctag("lead_id", LEAD_ID);
+  ctag("platform", (tg && tg.platform) || "web");
+  track("app_open", { platform:(tg && tg.platform) || "web" });
+})();
+
+function drawHotbar(full){
+  el.hotbar.hidden = false;
+  el.hotbar.innerHTML = STEPS.map((_, k) => `<i class="${(full || k <= i) ? "on" : ""}"></i>`).join("");
+}
+
+function render(){
+  const s = STEPS[i];
+  drawHotbar();
+  show(el.q);
+  el.q.classList.remove("step-enter"); void el.q.offsetWidth; el.q.classList.add("step-enter");
+
+  el.icon.innerHTML = pixelSVG(s.icon, 40);
+  el.icon.style.animation = "none"; void el.icon.offsetWidth; el.icon.style.animation = "";
+
+  el.title.textContent = val(s.q) || "";
+  const h = val(s.hint) || "";
+  el.hint.textContent = h;
+  el.hint.hidden = !h;
+  el.title.classList.toggle("solo", !h);   // اگر توضیح نداشت، فاصله از روی تیتر جبران شود
+  el.err.textContent = "";
+  el.body.innerHTML = "";
+  el.contact.hidden = true;
+  pending = null;
+
+  ctag("step", s.id);
+  track("step_view", { step_id:s.id, step_index:i + 1, step_total:STEPS.length });
+
+  if (tg) { i === 0 ? tg.BackButton.hide() : tg.BackButton.show(); }
+
+  if (s.type === "choice"){
+    el.next.hidden = true;
+    const wrap = document.createElement("div");
+    wrap.className = "opts";
+    val(s.options).forEach(o => {
+      const b = document.createElement("button");
+      b.className = "opt";
+      b.innerHTML = `<b></b><span>${val(o.t)}</span>`;
+      b.onclick = () => {
+        haptic(); answers[s.id] = o.v; b.classList.add("sel");
+        ctag(s.id, o.v);
+        track("step_answer", { step_id:s.id, answer:o.v });
+        setTimeout(forward, 130);
+      };
+      wrap.appendChild(b);
+    });
+    el.body.appendChild(wrap);
+  } else {
+    el.next.hidden = false;
+    el.next.textContent = s.cta || (i === STEPS.length - 1 ? "ثبت اطلاعات" : "ادامه");
+    const inp = document.createElement("input");
+    inp.placeholder = s.placeholder || "";
+    inp.value = answers[s.id] || "";
+    if (s.type === "phone"){ inp.type = "tel"; inp.dir = "ltr"; inp.inputMode = "numeric"; }
+    inp.onkeydown = e => { if (e.key === "Enter") el.next.click(); };
+    el.body.appendChild(inp);
+    pending = inp;
+    setTimeout(() => inp.focus(), 60);
+
+    if (s.type === "phone" && tg && tg.isVersionAtLeast && tg.isVersionAtLeast("6.9")){
+      el.contact.hidden = false;
+      el.contact.onclick = () => {
+        try {
+          tg.requestContact(ok => {
+            if (ok){
+              answers.phone_source = "telegram";
+              answers.phone = answers.phone || "از تلگرام";
+              track("phone_from_telegram");
+              saveLead();
+            }
+          });
+        } catch(e){ el.contact.hidden = true; }
+      };
+    }
+  }
+}
+
+const faDigits = s => s.replace(/[۰-۹٠-٩]/g, d => "۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩".indexOf(d) % 10);
+function normalizePhone(raw){
+  let v = faDigits(raw).replace(/[\s\-()]/g, "");
+  if (v.startsWith("+98")) v = "0" + v.slice(3);
+  if (v.startsWith("0098")) v = "0" + v.slice(4);
+  if (v.startsWith("98") && v.length === 12) v = "0" + v.slice(2);
+  if (v.startsWith("9") && v.length === 10) v = "0" + v;
+  return v;
+}
+
+el.next.onclick = () => {
+  const s = STEPS[i];
+  const formal = P(answers);
+  let v = pending ? pending.value : "";
+  if (s.type === "phone"){
+    v = normalizePhone(v);
+    if (!/^09\d{9}$/.test(v)){
+      el.err.textContent = formal
+        ? "شمارهٔ موبایل باید با ۰۹ شروع شود و ۱۱ رقم باشد."
+        : "شمارهٔ موبایل باید با ۰۹ شروع بشه و ۱۱ رقم باشه.";
+      track("phone_invalid");
+      haptic("medium"); return;
+    }
+  } else if (s.validate){
+    const msg = s.validate(v, answers);
+    if (msg){ el.err.textContent = msg; haptic("medium"); return; }
+  } else if (!v.trim()){
+    el.err.textContent = formal ? "این قسمت خالی مانده است." : "این قسمت خالی مونده.";
+    return;
+  }
+  answers[s.id] = v.trim();
+  haptic();
+  track("step_answer", { step_id:s.id });
+  forward();
+};
+
+function forward(){ i < STEPS.length - 1 ? (i++, render()) : saveLead(); }
+function back(){ if (i > 0){ i--; render(); } }
+$("start").onclick = () => { haptic(); track("form_start"); render(); };
+
+/* ==========================================================================
+   ۶) ارسال داده
+   stage مشخص می‌کند لید در کدام مرحله است. سمت سرور بر اساس lead_id آپسرت کن
+   تا هر سشن یک ردیف بماند و آخرین stage روی آن بنشیند.
+   ========================================================================== */
+function payload(stage){
+  const u = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || {};
+  return {
+    source:"minecraft_english_miniapp",
+    lead_id:LEAD_ID,
+    stage:stage,                      // lead | checkout_click | checkout_skip | abandoned
+    submitted_at:new Date().toISOString(),
+    tg_id:u.id || null,
+    tg_username:u.username || null,
+    tg_name:[u.first_name, u.last_name].filter(Boolean).join(" ") || null,
+    tg_lang:u.language_code || null,
+    platform:(tg && tg.platform) || "web",
+    init_data:(tg && tg.initData) || "",   // سمت سرور امضایش را با توکن بات چک کن
+    answers
+  };
+}
+
+// Content-Type را text/plain گذاشته‌ایم تا CORS preflight نخورد (مخصوصاً Apps Script)
+async function post(stage){
+  if (!CONFIG.endpoint) return false;
+  const body = JSON.stringify(payload(stage));
+  const headers = { "Content-Type":"text/plain;charset=utf-8" };
+  try {
+    const r = await fetch(CONFIG.endpoint, { method:"POST", headers, body, keepalive:true });
+    if (r.ok) return true;
+  } catch(e){}
+  // فالبک: بعضی وب‌ویوها خواندن پاسخ را بلاک می‌کنند ولی خود درخواست می‌رسد
+  try {
+    await fetch(CONFIG.endpoint, { method:"POST", mode:"no-cors", headers, body, keepalive:true });
+    return true;
+  } catch(e){ return false; }
+}
+function beacon(stage){
+  if (!CONFIG.endpoint || !navigator.sendBeacon) return;
+  try {
+    navigator.sendBeacon(CONFIG.endpoint,
+      new Blob([JSON.stringify(payload(stage))], { type:"text/plain;charset=utf-8" }));
+  } catch(e){}
+}
+
+/* قدم شماره تماس: از اینجا به بعد لید ثبت شده است، حتی اگر ادامه ندهد */
+async function saveLead(){
+  el.next.disabled = true;
+  el.next.innerHTML = 'در حال ثبت <span class="spin"></span>';
+
+  const ok = await post("lead");
+  el.next.disabled = false;
+  el.next.textContent = "ثبت اطلاعات";
+
+  if (!ok && CONFIG.endpoint){
+    el.err.textContent = P(answers)
+      ? "ثبت نشد. لطفاً اینترنت را بررسی کنید و دوباره امتحان کنید."
+      : "ثبت نشد. اینترنتت رو چک کن و دوباره بزن.";
+    track("lead_submit_failed");
+    return;
+  }
+
+  leadSaved = true;
+  ctag("lead", "yes");
+  track("lead_submit", { has_phone:true });
+  haptic("heavy");
+  showPay();
+}
+
+/* ==========================================================================
+   ۷) اسلاید پرداخت — دکمه عمداً به جایی لینک نیست
+   شناسه‌ها برای GTM:  #btn-checkout  و  #btn-later
+   رویداد dataLayer:   checkout_click / checkout_skip
+   ========================================================================== */
+function summaryRow(label, value){
+  return value ? `<div class="row"><span>${label}</span><b>${value}</b></div>` : "";
+}
+function showPay(){
+  const formal = P(answers);
+  drawHotbar(true);
+  show(el.pay);
+  el.pay.classList.remove("step-enter"); void el.pay.offsetWidth; el.pay.classList.add("step-enter");
+  $("pay-icon").innerHTML = pixelSVG("emerald", 40);
+
+  $("pay-text").textContent = formal
+    ? "اطلاعات شما ثبت شد. برای اینکه جای فرزندتان در گروه نگه داشته شود، ثبت‌نام را نهایی کنید."
+    : "اطلاعاتت ثبت شد. برای اینکه جات توی گروه نگه داشته بشه، ثبت‌نام رو نهایی کن.";
+
+  $("pay-summary").innerHTML =
+    summaryRow("دوره", CONFIG.courseName) +
+    summaryRow("نام", answers.name) +
+    summaryRow("سطح", LABELS.level[answers.level]) +
+    summaryRow("دستگاه", LABELS.device[answers.device]) +
+    summaryRow("شماره", answers.phone) +
+    (CONFIG.price ? `<div class="row total"><span>مبلغ</span><b>${CONFIG.price}</b></div>` : "");
+
+  $("pay-note").textContent = formal
+    ? "اگر الان نهایی نکنید، اطلاعات شما نزد ما می‌ماند و کارشناس تماس می‌گیرد."
+    : "اگر الان نهایی نکنی، اطلاعاتت پیش ما می‌مونه و کارشناس باهات تماس می‌گیره.";
+
+  $("btn-later").textContent = formal ? "فعلاً نه، کارشناس تماس بگیرد" : "فعلاً نه، کارشناس تماس بگیره";
+  if (tg) tg.BackButton.hide();
+  ctag("step", "checkout");
+  track("checkout_view");
+}
+
+$("btn-checkout").onclick = () => {
+  haptic("heavy");
+  finalStageSent = true;
+  ctag("checkout", "clicked");
+  track("checkout_click", { price: CONFIG.price || null });
+  post("checkout_click");
+  finish("clicked");
+};
+$("btn-later").onclick = () => {
+  haptic();
+  finalStageSent = true;
+  ctag("checkout", "skipped");
+  track("checkout_skip");
+  post("checkout_skip");
+  finish("skipped");
+};
+
+/* اگر لید ثبت شد ولی هیچ‌کدام از دو دکمه زده نشد، همان را هم علامت می‌زنیم */
+window.addEventListener("pagehide", () => {
+  if (leadSaved && !finalStageSent){ finalStageSent = true; beacon("abandoned_checkout"); }
+});
+
+/* ==========================================================================
+   ۸) صفحهٔ پایان
+   ========================================================================== */
+function finish(path){
+  const formal = P(answers);
+  const first = (answers.name || "").trim().split(/\s+/)[0];
+  $("done-title").textContent = (!formal && first) ? ("ثبت شد، " + first) : "ثبت شد";
+  $("done-text").textContent = path === "clicked"
+    ? (formal
+        ? "پرداخت از داخل تلگرام انجام نمی‌شود. کارشناس ما تماس می‌گیرد، ظرفیت را تأیید می‌کند و لینک پرداخت را برایتان می‌فرستد."
+        : "پرداخت از داخل تلگرام انجام نمی‌شه. کارشناس ما باهات تماس می‌گیره، ظرفیت رو تأیید می‌کنه و لینک پرداخت رو می‌فرسته.")
+    : (formal
+        ? "کارشناس ما به‌زودی با شما تماس می‌گیرد و مسیر مناسب فرزندتان را توضیح می‌دهد."
+        : "کارشناس ما به‌زودی باهات تماس می‌گیره و همه‌چیز رو برات توضیح می‌ده.");
+  track("flow_complete", { path });
+  show(el.done);
+}
+
+$("close").onclick = () => {
+  // مسیر بدون endpoint: تنها فرصت ارسال داده به بات، چون sendData مینی‌اپ را می‌بندد
+  if (!CONFIG.endpoint && tg && typeof tg.sendData === "function"){
+    try { tg.sendData(JSON.stringify(payload("close"))); return; } catch(e){}
+  }
+  if (CONFIG.afterUrl && tg) tg.openTelegramLink(CONFIG.afterUrl);
+  else tg ? tg.close() : location.reload();
+};
+</script>
+</body>
+</html>
