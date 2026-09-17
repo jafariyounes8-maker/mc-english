@@ -565,6 +565,73 @@ const LABELS = {
 /* ==========================================================================
    ۵) موتور فرم
    ========================================================================== */
+/* ==========================================================================
+   لایهٔ پشتیبان تلگرام
+   اگر telegram-web-app.js لود نشود (در ایران telegram.org معمولاً فیلتر است)
+   همان قابلیت‌ها را از روی هشِ آدرس و پل نیتیو تلگرام بازمی‌سازیم.
+   ========================================================================== */
+(function telegramFallback(){
+  if (window.Telegram && window.Telegram.WebApp) return;      // SDK لود شده، کاری لازم نیست
+
+  const hash     = new URLSearchParams((location.hash || "").replace(/^#/, ""));
+  const initData = hash.get("tgWebAppData") || "";
+  const bridged  = !!(window.TelegramWebviewProxy || window.external && window.external.notify);
+  if (!initData && !bridged) return;                          // واقعاً بیرون تلگرام هستیم
+
+  const unsafe = {};
+  new URLSearchParams(initData).forEach((v, k) => {
+    if (k === "user"){ try { unsafe.user = JSON.parse(v); } catch(e){} }
+    else unsafe[k] = v;
+  });
+
+  const postEvent = (type, data) => {
+    const payload = data || {};
+    try {
+      if (window.TelegramWebviewProxy && window.TelegramWebviewProxy.postEvent)
+        return window.TelegramWebviewProxy.postEvent(type, JSON.stringify(payload));
+      if (window.external && window.external.notify)
+        return window.external.notify(JSON.stringify({ eventType:type, eventData:payload }));
+      if (window.parent && window.parent !== window)
+        return window.parent.postMessage(JSON.stringify({ eventType:type, eventData:payload }), "*");
+    } catch(e){}
+  };
+
+  const handlers = {};
+  const on = (type, fn) => { (handlers[type] = handlers[type] || []).push(fn); };
+
+  window.Telegram = window.Telegram || {};
+  window.Telegram.WebView = {                                  // تلگرام رویدادها را اینجا می‌ریزد
+    receiveEvent: (type, data) => (handlers[type] || []).forEach(fn => fn(data))
+  };
+
+  window.Telegram.WebApp = {
+    initData, initDataUnsafe: unsafe,
+    version:  hash.get("tgWebAppVersion")  || "6.0",
+    platform: hash.get("tgWebAppPlatform") || "unknown",
+    isVersionAtLeast: () => true,
+    ready:  () => postEvent("web_app_ready"),
+    expand: () => postEvent("web_app_expand"),
+    close:  () => postEvent("web_app_close"),
+    setHeaderColor:     c => postEvent("web_app_set_header_color", { color:c }),
+    setBackgroundColor: c => postEvent("web_app_set_background_color", { color:c }),
+    disableVerticalSwipes: () => postEvent("web_app_setup_swipe_behavior", { allow_vertical_swipe:false }),
+    sendData: d => postEvent("web_app_data_send", { data:d }),
+    openTelegramLink: u => postEvent("web_app_open_tg_link", { path_full:String(u).replace(/^https?:\/\/t\.me/, "") }),
+    HapticFeedback: {
+      impactOccurred: style => postEvent("web_app_trigger_haptic_feedback", { type:"impact", impact_style:style || "light" })
+    },
+    BackButton: {
+      show(){ postEvent("web_app_setup_back_button", { is_visible:true  }); return this; },
+      hide(){ postEvent("web_app_setup_back_button", { is_visible:false }); return this; },
+      onClick(fn){ on("back_button_pressed", fn); return this; }
+    },
+    requestContact(cb){
+      on("phone_requested", d => cb(!!(d && d.status === "sent"), d));
+      postEvent("web_app_request_phone");
+    }
+  };
+})();
+
 const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
 const answers = {};
 let i = 0, pending = null, leadSaved = false, finalStageSent = false;
@@ -957,4 +1024,3 @@ $("close").onclick = () => {
 </script>
 </body>
 </html>
-
