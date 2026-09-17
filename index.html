@@ -644,6 +644,7 @@ let i = 0, pending = null, leadSaved = false, finalStageSent = false;
 /* مسیر کاربر: هر اکشن با ثانیهٔ وقوعش */
 const T0 = Date.now();
 const TRAIL = [];
+let LAST_STEP = "";
 const secs  = () => Math.round((Date.now() - T0) / 1000);
 const trail = s => TRAIL.push(s + "@" + secs() + "s");
 trail("open");
@@ -712,6 +713,7 @@ function render(){
       b.onclick = () => {
         haptic(); answers[s.id] = o.v; b.classList.add("sel");
         trail(s.id + "=" + o.v);
+        logProgress(s.id);
         ctag(s.id, o.v);
         track("step_answer", { step_id:s.id, answer:o.v });
         setTimeout(forward, 130);
@@ -824,8 +826,10 @@ el.next.onclick = () => {
     return;
   }
   answers[s.id] = v.trim();
+  trail(s.id === "phone" ? "phone=typed" : s.id);
   haptic();
   track("step_answer", { step_id:s.id });
+  if (s.type !== "phone") logProgress(s.id);   // شماره مسیر خودش را دارد
   forward();
 };
 
@@ -851,6 +855,9 @@ function payload(stage){
     tg_lang:u.language_code || null,
     platform:(tg && tg.platform) || "web",
     duration_sec:secs(),
+    last_step:LAST_STEP,
+    steps_done:STEPS.filter(x => answers[x.id] !== undefined && answers[x.id] !== "").length,
+    steps_total:STEPS.length,
     journey:TRAIL.join(" › "),
     init_data:(tg && tg.initData) || "",   // سمت سرور امضایش را با توکن بات چک کن
     answers
@@ -910,6 +917,16 @@ function beacon(stage){
     navigator.sendBeacon(CONFIG.endpoint,
       new Blob([JSON.stringify(payload(stage))], { type:"text/plain;charset=utf-8" }));
   } catch(e){}
+}
+
+/* از لحظه‌ای که اسم را نوشت، هر جواب بعدی همان ردیف را به‌روز می‌کند.
+   بی‌صدا و بدون معطل کردن کاربر — اگر نرسید، جواب بعدی جبرانش می‌کند. */
+let partialSaved = false;
+function logProgress(stepId){
+  LAST_STEP = stepId;
+  if (!answers.name) return;                 // قبل از اسم، ردیف معنا ندارد
+  partialSaved = true;
+  try { post("partial"); } catch(e){}        // عمداً await نمی‌کنیم
 }
 
 /* قدم شماره تماس: از اینجا به بعد لید ثبت شده است، حتی اگر ادامه ندهد */
@@ -997,7 +1014,8 @@ $("btn-later").onclick = () => {
 
 /* اگر لید ثبت شد ولی هیچ‌کدام از دو دکمه زده نشد، همان را هم علامت می‌زنیم */
 window.addEventListener("pagehide", () => {
-  if (leadSaved && !finalStageSent){ finalStageSent = true; beacon("abandoned_checkout"); }
+  if (leadSaved && !finalStageSent){ finalStageSent = true; beacon("abandoned_checkout"); return; }
+  if (!leadSaved && partialSaved){ trail("left_form"); beacon("abandoned_form"); }
 });
 
 /* ==========================================================================
