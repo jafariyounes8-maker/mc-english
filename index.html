@@ -187,7 +187,12 @@ const CONFIG = {
 
   afterUrl:  "",   // اختیاری: لینک تلگرامی که بعد از بستن باز شود
 
-  debug:     true  // موقع تست true؛ قبل از پخش کمپین false کن
+  debug:     false, // موقع تست true؛ برای کمپین false
+
+  // دکمهٔ «شماره‌ام را از تلگرام بفرست».
+  // تلگرام شمارهٔ شیرشده را به بات می‌فرستد نه به صفحه، پس تا وقتی بات
+  // بک‌اند نداشته باشد این دکمه شماره‌ای تحویل نمی‌دهد. خاموش بماند.
+  shareContact: true
 };
 
 /* ==========================================================================
@@ -728,27 +733,27 @@ function render(){
 
     // شرط را به «آیا این متد اصلاً وجود دارد» تغییر دادیم، نه شمارهٔ نسخه.
     // بعضی کلاینت‌ها نسخه را پایین گزارش می‌کنند ولی متد را دارند.
-    if (s.type === "phone" && tg && typeof tg.requestContact === "function"){
+    if (CONFIG.shareContact && s.type === "phone" && tg && typeof tg.requestContact === "function"){
       el.contact.hidden = false;
       el.contact.onclick = () => {
         try {
           tg.requestContact((ok, res) => {
             if (!ok) return;
             const num = normalizePhone(readSharedPhone(res));
+            answers.phone_source = "telegram";
             if (/^09\d{9}$/.test(num)){
               answers.phone = num;
-              answers.phone_source = "telegram";
               inp.value = num;
-              trail("phone=telegram");
-              track("phone_from_telegram");
-              saveLead();
+              delete answers.phone_pending;
             } else {
-              el.err.textContent = P(answers)
-                ? "شماره از تلگرام دریافت نشد. لطفاً دستی بنویسید."
-                : "شماره از تلگرام نیومد. لطفاً دستی بنویسش.";
-              trail("phone_telegram_failed");
-              track("phone_from_telegram_failed");
+              // تلگرام شماره را به بات فرستاد نه به صفحه؛
+              // وب‌هوک سمت سرور آن را با tg_id به همین لید می‌چسباند.
+              answers.phone = "";
+              answers.phone_pending = "yes";
             }
+            trail("phone=telegram");
+            track("phone_from_telegram");
+            saveLead();
           });
         } catch(e){
           // کلاینت متد را پشتیبانی نمی‌کند
@@ -957,7 +962,7 @@ function showPay(){
     summaryRow("نام", answers.name) +
     summaryRow("سطح", LABELS.level[answers.level]) +
     summaryRow("دستگاه", LABELS.device[answers.device]) +
-    summaryRow("شماره", answers.phone) +
+    summaryRow("شماره", answers.phone || (answers.phone_pending ? "از تلگرام دریافت شد" : "")) +
     (CONFIG.price ? `<div class="row total"><span>مبلغ</span><b>${CONFIG.price}</b></div>` : "");
 
   $("pay-note").textContent = formal
