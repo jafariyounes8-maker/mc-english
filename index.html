@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -217,7 +216,40 @@ window.dataLayer = window.dataLayer || [];
   document.head.appendChild(t);
 })(CONFIG.clarityId);
 
-const LEAD_ID = "ld_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8);
+/* ──────────────────────────────────────────────
+   حافظهٔ جلسه
+   کاربری که وسط فرم بیرون می‌رود یا شماره‌اش را با تلگرام می‌فرستد و برمی‌گردد،
+   باید از همان‌جا ادامه بدهد نه از اول. اینجا نگه داشته می‌شود.
+   ────────────────────────────────────────────── */
+const SKEY = "lc_session";
+const SMAX = 24 * 60 * 60 * 1000;     // بعد از یک شبانه‌روز، جلسه کهنه است
+
+function loadSession(){
+  try {
+    const raw = localStorage.getItem(SKEY);
+    if (!raw) return null;
+    const d = JSON.parse(raw);
+    if (!d || !d.lead_id || d.done) return null;
+    if (Date.now() - (d.t0 || 0) > SMAX) { localStorage.removeItem(SKEY); return null; }
+    return d;
+  } catch(e){ return null; }
+}
+
+function saveSession(extra){
+  try {
+    localStorage.setItem(SKEY, JSON.stringify(Object.assign({
+      lead_id: LEAD_ID, t0: T0, answers: answers, trail: TRAIL, step: i
+    }, extra || {})));
+  } catch(e){}
+}
+
+function clearSession(){
+  try { localStorage.setItem(SKEY, JSON.stringify({ done:true, t0:Date.now() })); } catch(e){}
+}
+
+const SESSION = loadSession();
+const LEAD_ID = (SESSION && SESSION.lead_id)
+  || ("ld_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2, 8));
 
 function track(event, data){
   const p = Object.assign({ event, lead_id: LEAD_ID, role: (answers && answers.role) || null }, data || {});
@@ -638,12 +670,12 @@ const LABELS = {
 })();
 
 const tg = (window.Telegram && window.Telegram.WebApp) ? window.Telegram.WebApp : null;
-const answers = {};
+const answers = (SESSION && SESSION.answers) || {};
 let i = 0, pending = null, leadSaved = false, finalStageSent = false;
 
 /* مسیر کاربر: هر اکشن با ثانیهٔ وقوعش */
-const T0 = Date.now();
-const TRAIL = [];
+const T0 = (SESSION && SESSION.t0) || Date.now();
+const TRAIL = (SESSION && SESSION.trail) || [];
 let LAST_STEP = "";
 const secs  = () => Math.round((Date.now() - T0) / 1000);
 const trail = s => TRAIL.push(s + "@" + secs() + "s");
@@ -753,6 +785,7 @@ function render(){
               answers.phone = "";
               answers.phone_pending = "yes";
             }
+            saveSession();
             trail("phone=telegram");
             track("phone_from_telegram");
             saveLead();
@@ -835,7 +868,26 @@ el.next.onclick = () => {
 
 function forward(){ i < STEPS.length - 1 ? (i++, render()) : saveLead(); }
 function back(){ if (i > 0){ i--; render(); } }
-$("start").onclick = () => { haptic(); track("form_start"); render(); };
+function firstUnanswered(){
+  for (var k = 0; k < STEPS.length; k++){
+    const st = STEPS[k];
+    // شماره‌ای که از تلگرام آمده، سمت سرور چسبانده می‌شود؛ اینجا جواب‌داده حساب است
+    if (st.id === "phone" && answers.phone_pending) continue;
+    const v = answers[st.id];
+    if (v === undefined || v === "") return k;
+  }
+  return STEPS.length - 1;
+}
+
+$("start").onclick = () => { haptic(); track("form_start"); i = firstUnanswered(); render(); };
+
+/* جلسهٔ نیمه‌تمام: مستقیم برو سر جای قبلی، صفحهٔ معرفی را دوباره نشان نده */
+if (SESSION && Object.keys(answers).length){
+  trail("resumed");
+  const done = answers.phone || answers.phone_pending;
+  if (done){ leadSaved = true; showPay(); }   // همه چیز داده شده، برو مرحلهٔ آخر
+  else { i = firstUnanswered(); render(); }
+}
 
 /* ==========================================================================
    ۶) ارسال داده
@@ -924,6 +976,7 @@ function beacon(stage){
 let partialSaved = false;
 function logProgress(stepId){
   LAST_STEP = stepId;
+  saveSession();
   if (!answers.name) return;                 // قبل از اسم، ردیف معنا ندارد
   partialSaved = true;
   try { post("partial"); } catch(e){}        // عمداً await نمی‌کنیم
@@ -996,6 +1049,7 @@ function showPay(){
 $("btn-checkout").onclick = () => {
   haptic("heavy");
   finalStageSent = true;
+  clearSession();
   trail("checkout_click");
   ctag("checkout", "clicked");
   track("checkout_click", { price: CONFIG.price || null });
@@ -1005,6 +1059,7 @@ $("btn-checkout").onclick = () => {
 $("btn-later").onclick = () => {
   haptic();
   finalStageSent = true;
+  clearSession();
   trail("checkout_skip");
   ctag("checkout", "skipped");
   track("checkout_skip");
